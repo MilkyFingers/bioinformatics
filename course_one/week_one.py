@@ -3,7 +3,7 @@ import time
 # Takes a sequence of DNA and returns the number of occurences of a specified k-mer (pattern)
 def PatternCount(Text, Pattern):
 	count = 0
-	for i in range(len(Text) - len(Pattern)):
+	for i in range((len(Text) - len(Pattern)) + 1):
 		if Text[i:i+len(Pattern)] == Pattern:
 			count += 1
 	return count
@@ -12,7 +12,7 @@ def PatternCount(Text, Pattern):
 def FrequentWords(Text, k):
     FrequentWords = []
     count = []
-    for i in range(len(Text) - k):
+    for i in range((len(Text) - k) + 1):
         currentPat = Text[i:i+k]
         count.append(PatternCount(Text, currentPat))
     max_count = max(count)
@@ -25,12 +25,12 @@ def FrequentWords(Text, k):
 # A more efficient version of the FrequentWords algorithm in O(n)
 def FrequentWords_faster(Text, k):
     FrequentWords = {}
-    for i in range(len(Text)-k):
+    for i in range((len(Text)-k) + 1):
         word = Text[i:i+k]
         try:
             FrequentWords[word] += 1
         except KeyError:
-            FrequentWords[word] = 0
+            FrequentWords[word] = 1
     return FrequentWords
 
 # An algorithm to return the reverse complment of a string. Note, the string is returned 5' to 3' 
@@ -49,7 +49,7 @@ def ReturnCompliment(Pattern):
     return rc
 
 # Returns all the indices where a substring accurs in a given string
-def Find_substring_locations(Input, Pattern):
+def PatternMatching(Input, Pattern):
     locations = []
     add = 0
     try:
@@ -140,6 +140,30 @@ def ClumpFinding(Genome, L, t, k):
             pat = NumberToPattern(i, k)
             frequent_patterns.append(pat)
     return frequent_patterns
+
+# A clump finding algorithm implemented using dictionaries. This removes the need to store k-mers never seen and is more simple. The course directors need a hand...
+def ClumpFindingBetter(Genome, L, t, k):
+    frequent_words = [] # the final output will be stored here
+    Text = Genome[0:L]
+    frequency_dict = FrequentWords_faster(Text, k) # a dictionary of all frequencies of k-mers in the first window
+    for kmer in frequency_dict:
+        if frequency_dict[kmer] >= t:
+            frequent_words.append(kmer)
+    # now we loop over the remaining windows, removing the last word, adding the next, or creating it's key if it is new
+    for i in range(1, (len(Genome) - L) + 1):
+        removed_pat = Genome[i - 1:(i - 1) + k] # the last k-mer, now out of the window
+        new_pat = Genome[i + (L - k):(i + (L - k)) + k] # the new k-mer just seen
+        frequency_dict[removed_pat] -= 1 # removes one
+        try:
+            frequency_dict[new_pat] += 1
+        except KeyError:
+            frequency_dict[new_pat] = 1 # accounting for the k-mer if it hasnt been seen yet
+        if frequency_dict[removed_pat] >= t:
+            frequent_words.append(removed_pat)
+        if frequency_dict[new_pat] >= t:
+            frequent_words.append(new_pat)
+    return frequent_words
+
 
 if __name__ == "__main__":
 
