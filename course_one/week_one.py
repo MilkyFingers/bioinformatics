@@ -202,7 +202,7 @@ if __name__ == "__main__":
     with open("data/vibrio_cholerae.txt") as data:
         data = data.readlines()
         data[0] = data[0].strip("\n")
-        x = Find_substring_locations(data[0], "ATGATCAAG")
+        x = PatternMatching(data[0], "ATGATCAAG")
     with open("data/vibrio_locations.txt", "w") as output:
         for i in range(len(x)):
             output.write(str(x[i]))
