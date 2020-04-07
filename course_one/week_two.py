@@ -1,4 +1,18 @@
-from course_one.week_one import *
+# An algorithm to return the reverse complment of a string. Note, the string is returned 5' to 3' 
+def ReturnCompliment(Pattern):
+    rc = ""
+    for i in range(len(Pattern)):
+        if Pattern[i] == "A":
+            rc += "T"
+        elif Pattern[i] == "T":
+            rc += "A"
+        elif Pattern[i] == "C":
+            rc += "G"
+        else:
+            rc += "C"
+    rc = rc[::-1]
+    return rc
+
 # A function to return the locations in the genome where the skew is a minimum
 # The original design had a running time ~ O(3n). This new implementation is closer to ~ O(n)
 def minimumSkew(genome):
@@ -35,18 +49,71 @@ def patternMatches(genome, string, d):
             locations.append(i)
     return locations
 
-# A more efficient version of the FrequentWords algorithm in O(n)
-def FrequentWords_faster(Text, k):
+# returns a list of k-mers with at most d mismatches
+def neighbourPatterns(pattern, d):
+    neighbours = []
+    if d == 0:
+        return [pattern]
+    if len(pattern) == 1:
+        return ["A", "C", "T", "G"]
+    suffix_pattern = pattern[1:]
+    suffix_neighbours = neighbourPatterns(suffix_pattern, d)
+    for string in suffix_neighbours:
+        if hammingDistance(pattern[1:], string) < d:
+            for nuc in ["A", "C", "T", "G"]:
+                neighbours.append(nuc+string)
+        else:
+            neighbours.append(pattern[0]+string)
+    return neighbours
+
+# returns frequent words with mismatches
+def FrequentWordsWithMismatches(Text, k, d):
     FrequentWords = {}
     for i in range((len(Text)-k) + 1):
         word = Text[i:i+k]
-        try:
-            FrequentWords[word] += 1
-        except KeyError:
-            FrequentWords[word] = 1
+        neighbours = neighbourPatterns(word, d)
+        for kmer in neighbours:
+            try:
+                FrequentWords[kmer] += 1
+            except KeyError:
+                FrequentWords[kmer] = 1
+    return FrequentWords
+
+# returns frequent words with mismatches
+def FrequentWordsWithMismatchesAndReverse(Text, k, d):
+    FrequentWords = {}
+    for i in range((len(Text)-k) + 1):
+        word = Text[i:i+k]
+        word_rev = ReturnCompliment(word)
+        neighbours = neighbourPatterns(word, d)
+        neighbours_rev = neighbourPatterns(word_rev, d)
+        neighbours = neighbours + neighbours_rev
+        #neighbours = set(neighbours)
+        for kmer in neighbours:
+            try:
+                FrequentWords[kmer] += 1
+            except KeyError:
+                FrequentWords[kmer] = 1
     return FrequentWords
 
 if __name__ == "__main__":
+    # Main task
+    out = []
+    with open("data/dataset_w2_main.txt") as data:
+        data = data.readlines()
+        data[0] = data[0].strip("\n")
+        data[1] = data[1].strip("\n")
+        out = FrequentWordsWithMismatchesAndReverse(data[0], 7, 3)
+    m = 0
+    k = []
+    for key in out:
+        if out[key] >= m:
+            m = out[key]
+    for key in out:
+        if out[key] == m:
+            k. append(key)
+    print(k)
+
     # Task one
     with open("data/dataset_w2_one.txt") as data:
         data = data.readlines()
@@ -69,3 +136,10 @@ if __name__ == "__main__":
         out = patternMatches(data[1], data[0], int(data[2]))
         print(len(out))
     
+    # Task four
+    out = []
+    out = neighbourPatterns("TGGAGTTAAC", 2)
+    with open("data/output.txt", "w") as output:
+        for strings in out:
+            output.write(strings)
+            output.write(" ")
